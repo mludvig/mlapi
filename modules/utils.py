@@ -116,27 +116,35 @@ def convert_config_to_ml_sequence():
 def str_split(my_str):
     return [x.strip() for x in my_str.split(',')]
 
+def correct_type(val,t):
+    if t == 'int':
+         return int(val)
+    elif t == 'eval'  or t == 'dict':
+        return ast.literal_eval(val) if val else None
+    elif t == 'str_split':
+        return str_split(val) if val else None
+    elif t  == 'string':
+        return val
+    elif t == 'float':
+        return float(val)
+    else:
+        g.logger.Error ('Unknown conversion type {} for config key:{}'.format(e['type'], e['key']))
+        return val
+
+def set_config_defaults(config_vals):
+    config = {}
+    for k,v in config_vals.items():
+        val = v.get('default', None)
+        config[k] = correct_type(val, v['type'])
+        #print ('{}={}'.format(k,g.config[k]))
+    return config
+
 def process_config(args):
 # parse config file into a dictionary with defaults
 
     g.config = {}
     has_secrets = False
     secrets_file = None
-
-    def _correct_type(val,t):
-        if t == 'int':
-             return int(val)
-        elif t == 'eval'  or t == 'dict':
-            return ast.literal_eval(val) if val else None
-        elif t == 'str_split':
-            return str_split(val) if val else None
-        elif t  == 'string':
-            return val
-        elif t == 'float':
-            return float(val)
-        else:
-            g.logger.Error ('Unknown conversion type {} for config key:{}'.format(e['type'], e['key']))
-            return val
 
     def _set_config_val(k,v):
     # internal function to parse all keys
@@ -154,7 +162,7 @@ def process_config(args):
                 raise ValueError ('secret token {} not found in secrets file {}'.format(val,secrets_filename))
 
 
-        g.config[k] = _correct_type(val, v['type'])
+        g.config[k] = correct_type(val, v['type'])
         if k.find('password') == -1:
             dval = g.config[k]
         else:
@@ -200,15 +208,9 @@ def process_config(args):
                 raise            
         else:
             g.logger.Debug (1,'No secrets file configured')
+
         # now read config values
-    
-        # first, fill in config with default values
-        for k,v in g.config_vals.items():
-            val = v.get('default', None)
-            g.config[k] = _correct_type(val, v['type'])
-            #print ('{}={}'.format(k,g.config[k]))
-            
-        # now iterate the file
+        # first iterate the file
         for sec in config_file.sections():
             if sec == 'secrets':
                 continue

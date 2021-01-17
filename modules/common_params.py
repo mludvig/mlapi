@@ -1,6 +1,5 @@
 import modules.log as g_log
-
-
+from modules.utils import set_config_defaults
 
 MAX_FILE_SIZE_MB = 5
 ALLOWED_EXTENSIONS = set(['.png', '.jpg', '.jpeg'])
@@ -9,7 +8,6 @@ ACCESS_TOKEN_EXPIRES = 60 * 60  # 1 hr
 log = g_log.ConsoleLog()
 logger = log
 
-config = {}
 config_vals = {
          'secrets':{
             'section': 'general',
@@ -354,4 +352,4 @@ config_vals = {
 
 
 }
-
+config = set_config_defaults(config_vals)
